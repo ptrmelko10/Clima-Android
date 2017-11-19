@@ -201,7 +201,6 @@ public class WeatherController extends AppCompatActivity {
         mWeatherImage.setImageResource(resourceID);
     }
 
-s
     // TODO: Add onPause() here
     @Override
     protected void onPause() {
