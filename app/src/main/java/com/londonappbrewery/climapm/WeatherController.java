@@ -4,7 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.Drawable;
+import android.graphics.Typeface;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -14,6 +14,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -59,12 +60,27 @@ public class WeatherController extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.weather_controller_layout);
 
+        //Adding Font Awesome Icon to project
+        Typeface font = Typeface.createFromAsset( getAssets(), "fonts/fontawesome-webfont.ttf");
+        Button refreshButton = (Button) findViewById(R.id.refreshButton);
+        refreshButton.setTypeface(font);
+
         // Linking the elements in the layout to Java code
         mCityLabel = (TextView) findViewById(R.id.locationTV);
         mWeatherImage = (ImageView) findViewById(R.id.weatherSymbolIV);
         mTemperatureLabel = (TextView) findViewById(R.id.tempTV);
         ImageButton changeCityButton = (ImageButton) findViewById(R.id.changeCityButton);
 
+        refreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (BuildConfig.DEBUG) Log.d("Clima:", "Clicked on refresh");
+                mWeatherImage.setImageResource(R.drawable.dunno);
+                mCityLabel.setText(R.string.default_location);
+                mTemperatureLabel.setText(R.string.default_temp);
+                getWeatherForCurrentLocation();
+            }
+        });
 
         // TODO: Add an OnClickListener to the changeCityButton here:
         changeCityButton.setOnClickListener(new View.OnClickListener() {
@@ -81,16 +97,27 @@ public class WeatherController extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        Log.d("Clima", "onResume: Called");
+        if (BuildConfig.DEBUG) Log.d("Clima", "onResume: Called");
 
         Intent myIntent = getIntent();
         String city = myIntent.getStringExtra("City");
+        myIntent.removeExtra("City");
 
         if(city != null) {
             getWeatherForNewCity(city);
         } else {
-            Log.d("Clima", "Getting weather data for current location");
+            if (BuildConfig.DEBUG) Log.d("Clima", "Getting weather data for current location");
             getWeatherForCurrentLocation();
+        }
+    }
+
+    // TODO: Add onPause() here
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        if(mLocationManager != null) {
+            mLocationManager.removeUpdates(mLocationListener);
         }
     }
 
@@ -111,12 +138,12 @@ public class WeatherController extends AppCompatActivity {
         mLocationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                Log.d("Clima", "onLocationChanged: callback received ");
+                if (BuildConfig.DEBUG) Log.d("Clima", "onLocationChanged: callback received ");
 
                 String latitude = String.valueOf(location.getLatitude());
                 String longitude = String.valueOf(location.getLongitude());
 
-                Log.d("Clima", "Latitude: " + latitude + " Longitude: " + longitude);
+                if (BuildConfig.DEBUG) Log.d("Clima", "Latitude: " + latitude + " Longitude: " + longitude);
 
                 RequestParams params = new RequestParams();
                 params.put("lat", latitude);
@@ -137,7 +164,7 @@ public class WeatherController extends AppCompatActivity {
 
             @Override
             public void onProviderDisabled(String provider) {
-                Log.d("Clima", "onProviderDisabled: callback received");
+                if (BuildConfig.DEBUG) Log.d("Clima", "onProviderDisabled: callback received");
             }
         };
 
@@ -161,10 +188,10 @@ public class WeatherController extends AppCompatActivity {
 
         if(requestCode == REQUEST_CODE) {
             if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d("Clima", "onRequestPermissionsResult: Permission granted!");
+                if (BuildConfig.DEBUG) Log.d("Clima", "onRequestPermissionsResult: Permission granted!");
                 getWeatherForCurrentLocation();
             } else {
-                Log.d("Clima", "onRequestPermissionsResult: Permission Denied!");
+                if (BuildConfig.DEBUG) Log.d("Clima", "onRequestPermissionsResult: Permission Denied!");
             }
         }
     }
@@ -177,7 +204,7 @@ public class WeatherController extends AppCompatActivity {
             
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("Clima App", "Success, JSON: " +response.toString());
+                if (BuildConfig.DEBUG) Log.d("Clima App", "Success, JSON: " +response.toString());
 
                 WeatherDataModel weatherData = WeatherDataModel.fromJson(response);
                 updateUI(weatherData);
@@ -185,8 +212,8 @@ public class WeatherController extends AppCompatActivity {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, Throwable e, JSONObject response) {
-                Log.e("Clima App", "Failure: " + e.toString());
-                Log.d("Clima App", "Status Code: " + statusCode);
+                if (BuildConfig.DEBUG) Log.e("Clima App", "Failure: " + e.toString());
+                if (BuildConfig.DEBUG) Log.d("Clima App", "Status Code: " + statusCode);
                 Toast.makeText(WeatherController.this, "Request Failed", Toast.LENGTH_LONG).show();
             }
         });
@@ -201,13 +228,5 @@ public class WeatherController extends AppCompatActivity {
         mWeatherImage.setImageResource(resourceID);
     }
 
-    // TODO: Add onPause() here
-    @Override
-    protected void onPause() {
-        super.onPause();
 
-        if(mLocationManager != null) {
-            mLocationManager.removeUpdates(mLocationListener);
-        }
-    }
 }
