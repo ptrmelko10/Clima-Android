@@ -19,6 +19,8 @@ public class ChangeCityController extends AppCompatActivity {
         final EditText editTextField = (EditText) findViewById(R.id.queryET);
         final ImageButton backButton = (ImageButton) findViewById(R.id.backButton);
 
+        editTextField.setText(null);
+
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -30,6 +32,7 @@ public class ChangeCityController extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 String newCity = editTextField.getText().toString();
+                editTextField.setText(null);
                 Intent newCityIntent = new Intent(ChangeCityController.this, WeatherController.class);
                 newCityIntent.putExtra("City", newCity);
                 startActivity(newCityIntent);
